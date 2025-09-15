@@ -5,6 +5,7 @@
 #include <pico/stdlib.h>
 #include <pico/multicore.h>
 #include <pico/cyw43_arch.h>
+#include "func.h"
 
 SemaphoreHandle_t semaphore;
 
