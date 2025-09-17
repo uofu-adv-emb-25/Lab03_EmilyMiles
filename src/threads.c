@@ -16,11 +16,11 @@ void side_thread(void *params)
 {
 	while (1) {
         vTaskDelay(100);
-        xSemaphoreTake(&semaphore, K_FOREVER);
+        xSemaphoreTake(semaphore, (TickType_t) 10);
         {
             counter += 1;
         }
-        xSemaphoreGive(&semaphore);
+        xSemaphoreGive(semaphore);
         printf("hello world from %s! Count %d\n", "thread", counter);
 	}
 }
@@ -30,11 +30,11 @@ void main_thread(void *params)
 	while (1) {
         cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, on);
         vTaskDelay(100);
-        xSemaphoreTake(&semaphore, K_FOREVER);
+        xSemaphoreTake(semaphore, (TickType_t) 10);
         {
             counter += 1;
         }
-        xSemaphoreGive(&semaphore);
+        xSemaphoreGive(semaphore);
 		printf("hello world from %s! Count %d\n", "main", counter);
         on = !on;
 	}
