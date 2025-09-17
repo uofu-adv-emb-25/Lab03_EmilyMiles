@@ -31,6 +31,26 @@ void test_multiplication(void)
     TEST_ASSERT_TRUE_MESSAGE(z == 5, "Multiplication of two integers returned incorrect value.");
 }
 
+void test_increment_count(void)
+{
+    SemaphoreHandle_t semaphore = xSemaphoreCreateCounting(1,1);
+    int count = 0;
+    int result = increment_counter(semaphore, &count);
+    TEST_ASSERT_EQUAL_MESSAGE(result, 1, "Lock was not acquired");
+    TEST_ASSERT_EQUAL_MESSAGE(count, 1, "Count was not incremented");
+}
+
+void test_increment_count_fail(void)
+{
+    SemaphoreHandle_t semaphore = xSemaphoreCreateCounting(1,1);
+    int count = 0;
+    xSemaphoreTake(semaphore, portMAX_DELAY);
+    int result = increment_counter(semaphore, &count);
+    TEST_ASSERT_EQUAL_MESSAGE(result, 0, "Lock was acquired");
+    TEST_ASSERT_EQUAL_MESSAGE(count, 0, "Count was incremented");
+}
+
+
 int main (void)
 {
     stdio_init_all();
@@ -40,6 +60,8 @@ int main (void)
     UNITY_BEGIN();
     RUN_TEST(test_variable_assignment);
     RUN_TEST(test_multiplication);
+    RUN_TEST(test_increment_count);
+    RUN_TEST(test_increment_count_fail);
     sleep_ms(5000);
     UNITY_END();
 
