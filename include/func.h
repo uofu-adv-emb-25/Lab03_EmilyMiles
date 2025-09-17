@@ -13,4 +13,4 @@
 
 void side_thread(void *params);
 void main_thread(void *params);
-void increment_counter(SemaphoreHandle_t counter_semaphore, int* counter_ptr);
+int increment_counter(SemaphoreHandle_t counter_semaphore, int* counter_ptr);

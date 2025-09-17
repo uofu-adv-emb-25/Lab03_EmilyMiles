@@ -2,12 +2,14 @@
 
 
 
-void increment_counter(SemaphoreHandle_t counter_semaphore, int* counter_ptr)
+int increment_counter(SemaphoreHandle_t counter_semaphore, int* counter_ptr)
 {
-    xSemaphoreTake(counter_semaphore, (TickType_t) 10);
+    int result = xSemaphoreTake(counter_semaphore, portMAX_DELAY);
+    if (result == pdTRUE)
     {
         *counter_ptr += 1;
+        xSemaphoreGive(counter_semaphore);
     }
-    xSemaphoreGive(counter_semaphore);
-
+    
+    return result;
 }
