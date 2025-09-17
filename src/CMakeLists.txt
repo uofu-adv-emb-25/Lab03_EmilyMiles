@@ -3,6 +3,7 @@ set(execName "threads")
 
 add_executable(${execName}
     threads.c
+    func.c
     )
 
 pico_set_program_name(${execName} "test")

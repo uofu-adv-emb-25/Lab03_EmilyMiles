@@ -6,6 +6,7 @@
 #include "unity_config.h"
 #include "func.h"
 
+
 void setUp(void) 
 {        
     printf("Start test\n");
