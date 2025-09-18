@@ -69,11 +69,29 @@ void test_deadlock_case1(void)
     // Allow tasks A and B to lock
     vTaskDelay(1000);
 
-    TEST_ASSERT_EQUAL_MESSAGE(argsA->count, 4, "Task A did not acquire locks as expected");
-    TEST_ASSERT_EQUAL_MESSAGE(argsB->count, 1, "Task B did not acquire locks as expected");
+    TEST_ASSERT_EQUAL(argsA.counter, 4);
+    TEST_ASSERT_EQUAL(argsB.counter, 1);
 
     vTaskDelete(task_A);
     vTaskDelete(task_B);
+}
+
+test_orphaned_lock(void)
+{
+    SemaphoreHandle_t semaphore = xSemaphoreCreateCounting(1,1);
+
+    orphanParams args = {semaphore, 0};
+
+    TaskHandle_t task_orphan;
+    xTaskCreate(orphaned_lock, "task_orphan",
+            SIDE_TASK_STACK_SIZE, (void *)&args, SIDE_TASK_PRIORITY, &task_orphan);
+
+    vTaskDelay(1000);
+
+    TEST_ASSERT_EQUAL(args.counter, 1);
+
+    vTaskDelete(task_orphan);
+
 }
 
 //Main test running thread
@@ -81,6 +99,7 @@ void runTestThread(__unused void *args)
 {
     while(1) 
     {
+        sleep_ms(10000);
         UNITY_BEGIN();
         RUN_TEST(test_variable_assignment);
         RUN_TEST(test_multiplication);
@@ -97,7 +116,7 @@ int main (void)
     stdio_init_all();
     hard_assert(cyw43_arch_init() == PICO_OK);
     xTaskCreate(runTestThread,"RunningTests",
-                SIDE_TASK_STACK_SIZE,NULL,SIDE_TASK_PRIORITY+1,NULL)
+                SIDE_TASK_STACK_SIZE,NULL,SIDE_TASK_PRIORITY+1,NULL);
     vTaskStartScheduler();
     return 0;
 }
