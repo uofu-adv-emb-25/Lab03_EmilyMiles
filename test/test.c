@@ -6,7 +6,6 @@
 #include "unity_config.h"
 #include "func.h"
 
-
 void setUp(void) 
 {        
     printf("Start test\n");
@@ -36,7 +35,7 @@ void test_increment_count(void)
     SemaphoreHandle_t semaphore = xSemaphoreCreateCounting(1,1);
     int count = 0;
     int result = increment_counter(semaphore, &count);
-    TEST_ASSERT_EQUAL_MESSAGE(result, 1, "Lock was not acquired");
+    TEST_ASSERT_EQUAL_MESSAGE(result, pdTRUE, "Lock was not acquired");
     TEST_ASSERT_EQUAL_MESSAGE(count, 1, "Count was not incremented");
 }
 
@@ -46,26 +45,59 @@ void test_increment_count_fail(void)
     int count = 0;
     xSemaphoreTake(semaphore, portMAX_DELAY);
     int result = increment_counter(semaphore, &count);
-    TEST_ASSERT_EQUAL_MESSAGE(result, 0, "Lock was acquired");
+    TEST_ASSERT_EQUAL_MESSAGE(result, pdFALSE, "Lock was acquired");
     TEST_ASSERT_EQUAL_MESSAGE(count, 0, "Count was incremented");
 }
 
+
+void test_deadlock_case1(void)
+{
+    SemaphoreHandle_t semaphore_A = xSemaphoreCreateCounting(1,1);
+    SemaphoreHandle_t semaphore_B = xSemaphoreCreateCounting(1,1);
+    deadlockParams argsA = {semaphore_A,semaphore_B, 3};
+    deadlockParams argsB = {semaphore_A,semaphore_B, 0};
+
+    TaskHandle_t task_A, task_B;
+    // Create Task A that obtains lock A, pauses, then waits for lock B
+    xTaskCreate(taskA, "taskA",
+                SIDE_TASK_STACK_SIZE, (void *)&argsA, SIDE_TASK_PRIORITY, &task_A);
+                
+    // Create Task B that obtains lock B and waits for lock A
+    xTaskCreate(taskB, "taskB",
+                SIDE_TASK_STACK_SIZE, (void *)&argsB, SIDE_TASK_PRIORITY, &task_B);
+
+    // Allow tasks A and B to lock
+    vTaskDelay(1000);
+
+    TEST_ASSERT_EQUAL_MESSAGE(argsA->count, 4, "Task A did not acquire locks as expected");
+    TEST_ASSERT_EQUAL_MESSAGE(argsB->count, 1, "Task B did not acquire locks as expected");
+
+    vTaskDelete(task_A);
+    vTaskDelete(task_B);
+}
+
+//Main test running thread
+void runTestThread(__unused void *args)
+{
+    while(1) 
+    {
+        UNITY_BEGIN();
+        RUN_TEST(test_variable_assignment);
+        RUN_TEST(test_multiplication);
+        RUN_TEST(test_increment_count);
+        RUN_TEST(test_increment_count_fail);
+        RUN_TEST(test_deadlock_case1);
+        UNITY_END();
+        sleep_ms(10000);
+    }
+}
 
 int main (void)
 {
     stdio_init_all();
     hard_assert(cyw43_arch_init() == PICO_OK);
-    
-    sleep_ms(10000); // Give time for TTY to attach.
-    UNITY_BEGIN();
-    RUN_TEST(test_variable_assignment);
-    RUN_TEST(test_multiplication);
-    RUN_TEST(test_increment_count);
-    RUN_TEST(test_increment_count_fail);
-    sleep_ms(5000);
-    UNITY_END();
-
-    while(1) { sleep_ms(5000); }
-
-    return UNITY_END();
+    xTaskCreate(runTestThread,"RunningTests",
+                SIDE_TASK_STACK_SIZE,NULL,SIDE_TASK_PRIORITY+1,NULL)
+    vTaskStartScheduler();
+    return 0;
 }
