@@ -53,13 +53,13 @@ void orphaned_lock(void *arg)
 {
     orphanParams *args = (orphanParams *) arg;
     while (1) {
-        xSemaphoreTake(arg->semaphore, portMAX_DELAY);
-        arg->counter++;
-        if (arg->counter % 2) {
+        xSemaphoreTake(args->semaphore, portMAX_DELAY);
+        args->counter++;
+        if (args->counter % 2) {
             continue;
         }
-        printf("Count %d\n", arg->counter);
-        xSemaphoreGive(arg->semaphore);
+        printf("Count %d\n", args->counter);
+        xSemaphoreGive(args->semaphore);
     }
 }
 
@@ -67,13 +67,16 @@ void orphaned_lock_fix(void *arg)
 {
     orphanParams *args = (orphanParams *) arg;
     while (1) {
-        xSemaphoreTake(arg->semaphore, portMAX_DELAY);
-        arg->counter++;
-        if (arg->counter % 2) {
-            xSemaphoreGive(arg->semaphore);
+        xSemaphoreTake(args->semaphore, portMAX_DELAY);
+        args->counter++;
+        if (args->counter % 2) {
+            xSemaphoreGive(args->semaphore);
             continue;
         }
-        printf("Count %d\n", arg->counter);
-        xSemaphoreGive(arg->semaphore);
+        printf("Count %d\n", args->counter);
+        xSemaphoreGive(args->semaphore);
+
+        if (args->counter > 1000)
+            vTaskSuspend(NULL);
     }
 }

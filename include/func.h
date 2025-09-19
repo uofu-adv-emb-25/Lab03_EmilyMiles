@@ -17,7 +17,7 @@ typedef struct deadlockParams {
     int counter;
 } deadlockParams;
 
-typdedef struct orphanParams {
+typedef struct orphanParams {
     SemaphoreHandle_t semaphore;
     int counter;
 } orphanParams;
@@ -27,5 +27,5 @@ void main_thread(void *params);
 int increment_counter(SemaphoreHandle_t counter_semaphore, int* counter_ptr);
 void taskA(void *arg);
 void taskB(void *arg);
-void orphaned_lock(void);
+void orphaned_lock(void *arg);
 void orphaned_lock_fix(void *arg);

@@ -76,7 +76,7 @@ void test_deadlock_case1(void)
     vTaskDelete(task_B);
 }
 
-test_orphaned_lock(void)
+void test_orphaned_lock(void)
 {
     SemaphoreHandle_t semaphore = xSemaphoreCreateCounting(1,1);
 
@@ -86,11 +86,32 @@ test_orphaned_lock(void)
     xTaskCreate(orphaned_lock, "task_orphan",
             SIDE_TASK_STACK_SIZE, (void *)&args, SIDE_TASK_PRIORITY, &task_orphan);
 
+    // Let thread take, give, then orphan lock
     vTaskDelay(1000);
 
     TEST_ASSERT_EQUAL(args.counter, 1);
+    TEST_ASSERT_EQUAL(0, uxSemaphoreGetCount(args.semaphore));
 
     vTaskDelete(task_orphan);
+
+}
+
+void test_orphaned_lock_fix(void)
+{
+    SemaphoreHandle_t semaphore = xSemaphoreCreateCounting(1,1);
+
+    orphanParams args = {semaphore, 0};
+
+    TaskHandle_t task_orphan_fix;
+    xTaskCreate(orphaned_lock_fix, "task_orphan_fix",
+            SIDE_TASK_STACK_SIZE, (void *)&args, SIDE_TASK_PRIORITY, &task_orphan_fix);
+
+    vTaskDelay(1000);
+
+    TEST_ASSERT_TRUE(args.counter > 1000);
+    TEST_ASSERT_EQUAL(1, uxSemaphoreGetCount(args.semaphore));
+
+    vTaskDelete(task_orphan_fix);
 
 }
 
@@ -106,6 +127,8 @@ void runTestThread(__unused void *args)
         RUN_TEST(test_increment_count);
         RUN_TEST(test_increment_count_fail);
         RUN_TEST(test_deadlock_case1);
+        RUN_TEST(test_orphaned_lock);
+        RUN_TEST(test_orphaned_lock_fix);
         UNITY_END();
         sleep_ms(10000);
     }
