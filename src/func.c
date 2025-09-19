@@ -73,7 +73,7 @@ void orphaned_lock_fix(void *arg)
             xSemaphoreGive(args->semaphore);
             continue;
         }
-        printf("Count %d\n", args->counter);
+        //printf("Count %d\n", args->counter);
         xSemaphoreGive(args->semaphore);
 
         if (args->counter > 1000)
